@@ -1,0 +1,19 @@
+# MySQL local data directory
+/mysql_data/
+
+# Environment files
+.env
+*.env
+
+# IDE / Editor configuration
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS generated files
+.DS_Store
+Thumbs.db
+ehthumbs.db
