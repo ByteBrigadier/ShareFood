@@ -5,14 +5,18 @@ $error_message = '';
 $success_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = trim($_POST['name']);
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
-    $phone = trim($_POST['phone']);
-    $address = trim($_POST['address']);
-    $user_type = $_POST['user_type'];
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $phone = trim($_POST['phone'] ?? '');
+    $address = trim($_POST['address'] ?? '');
+    $user_type = $_POST['user_type'] ?? '';
     
-    if (empty($name) || empty($email) || empty($password) || empty($phone) || empty($address) || empty($user_type)) {
+    if (!csrfValid()) {
+        $error_message = "Invalid request. Please refresh the page and try again.";
+    } elseif (!in_array($user_type, ['donor', 'receiver'], true)) {
+        $error_message = "Please select a valid account type.";
+    } elseif (empty($name) || empty($email) || empty($password) || empty($phone) || empty($address) || empty($user_type)) {
         $error_message = "Please fill in all fields.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error_message = "Please enter a valid email address.";
@@ -129,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         <?php endif; ?>
         
         <form method="POST" action="">
+            <?php echo csrfField(); ?>
             <div class="form-group">
                 <label for="name">Full Name:</label>
                 <input type="text" id="name" name="name" required
