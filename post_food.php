@@ -1,5 +1,4 @@
 <?php
-session_start();
 include 'config.php';
 
 if (!isLoggedIn()) {
@@ -14,13 +13,15 @@ $error_message = '';
 $success_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $food_type = trim($_POST['food_type']);
-    $quantity = trim($_POST['quantity']);
-    $description = trim($_POST['description']);
-    $expiry_time = $_POST['expiry_time'];
-    $pickup_location = trim($_POST['pickup_location']);
+    $food_type = trim($_POST['food_type'] ?? '');
+    $quantity = trim($_POST['quantity'] ?? '');
+    $description = trim($_POST['description'] ?? '');
+    $expiry_time = $_POST['expiry_time'] ?? '';
+    $pickup_location = trim($_POST['pickup_location'] ?? '');
     
-    if (empty($food_type) || empty($quantity) || empty($expiry_time) || empty($pickup_location)) {
+    if (!csrfValid()) {
+        $error_message = "Invalid request. Please refresh the page and try again.";
+    } elseif (empty($food_type) || empty($quantity) || empty($expiry_time) || empty($pickup_location)) {
         $error_message = "Please fill in all required fields.";
     } elseif (strtotime($expiry_time) <= time()) {
         $error_message = "Expiry time must be in the future.";
@@ -216,6 +217,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <?php endif; ?>
             
             <form method="POST" action="">
+                <?php echo csrfField(); ?>
                 <div class="form-group">
                     <label for="food_type">Food Type <span class="required">*</span></label>
                     <input 
@@ -259,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         id="expiry_time" 
                         name="expiry_time" 
                         required 
-                        value="<?php echo isset($_POST['expiry_time']) ? $_POST['expiry_time'] : ''; ?>"
+                        value="<?php echo isset($_POST['expiry_time']) ? htmlspecialchars($_POST['expiry_time']) : ''; ?>"
                         min="<?php echo date('Y-m-d\TH:i'); ?>"
                     >
                     <div class="help-text">When is the food safe to consume until?</div>
