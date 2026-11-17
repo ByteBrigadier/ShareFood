@@ -1,104 +1,123 @@
-# 🍽️ ShareFood - Surplus Food Sharing Platform
+# 🍽️ ShareFood – Surplus Food Sharing Platform
 
-**ShareFood** is a web application designed to connect surplus food donors (restaurants, bakeries, households, event organizers) with receivers (NGOs, community centers, charities, individuals) to reduce food waste and combat hunger.
+ShareFood is a full-stack web application that connects **surplus food donors** (restaurants, bakeries, households, event organizers) with **receivers** (NGOs, community centers, charities, individuals) to reduce food waste and help fight hunger.
 
 ---
 
 ## ✨ Features
 
-- **User Authentication & Role Management**:
-  - **Donors**: Post surplus food listings with description, quantity, expiry timestamp, and pickup address.
-  - **Receivers**: Browse available food, filter/sort by urgency, and claim items in real-time.
-- **Interactive Dashboard**: Track active listings, total claimed items, and status updates (Available / Claimed / Picked Up).
-- **Urgency Indicator**: Dynamic calculation highlighting food items nearing expiration.
-- **Responsive UI**: Clean CSS styling with glassmorphism header design and mobile-responsive layout.
+- **Role-based authentication** – separate Donor and Receiver accounts with session management and hashed passwords.
+- **Donors** post surplus food with type, quantity, description, expiry time and pickup location.
+- **Receivers** browse available food, sort it by expiry time, date posted or food type, and claim items.
+- **Urgency indicator** – listings close to expiry are highlighted automatically, and expired listings are hidden.
+- **Dashboards** – donors track their listings and receivers track their claims, with Available / Claimed / Picked Up status badges.
+- **Responsive UI** – clean HTML/CSS layout that works on desktop and mobile.
+
+## 🔒 Security
+
+- Passwords are hashed with `password_hash()` and verified with `password_verify()`; there are no built-in or default passwords.
+- All database access uses **PDO prepared statements** (SQL injection protection); user-supplied output is escaped with `htmlspecialchars()` (XSS protection).
+- **CSRF tokens** protect every state-changing form (login, register, post food, claim food).
+- Session ID is regenerated on login, and session cookies are `HttpOnly` and `SameSite=Lax`.
+- Claiming is **atomic** (a single transaction with a conditional `UPDATE`), so two receivers can never claim the same listing.
+- Database credentials are read from environment variables or an untracked `config.local.php`, never from the repository.
 
 ---
 
 ## 🛠️ Tech Stack
 
-- **Backend**: PHP 8.x
-- **Database**: MySQL 8.x / MariaDB (PDO)
-- **Frontend**: HTML5, CSS3 (Modern Flexbox & Grid)
+| Layer | Technology |
+| :--- | :--- |
+| Backend | PHP 8.x |
+| Database | MySQL 8.x / MariaDB (via PDO) |
+| Frontend | HTML5, CSS3 (Flexbox & Grid), minimal JavaScript |
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Getting Started
 
 ### 1. Prerequisites
-- PHP 8.0 or higher
-- MySQL / MariaDB Server
+- PHP 8.0 or higher (with the `pdo_mysql` extension)
+- MySQL or MariaDB server
 
-### 2. Database Setup
-1. Start your MySQL server.
-2. Import `database.sql` into MySQL:
-   ```bash
-   mysql -u root -p < database.sql
-   ```
-   *(This creates the `food_sharing_platform` database, required tables, and populates initial demo data.)*
+### 2. Set up the database
+```bash
+mysql -u root -p < database.sql
+```
+This creates the `food_sharing_platform` database, its tables and some demo data.
+> ⚠️ `database.sql` drops and recreates the tables, so importing it again resets all data.
 
-3. Verify or adjust database credentials in [`config.php`](file:///c:/Users/dasha/Documents/Web_Project/config.php):
-   ```php
-   $host = 'localhost';
-   $dbname = 'food_sharing_platform';
-   $username = 'root';
-   $password = 'dash'; // Adjust to your MySQL root password
-   ```
+### 3. Configure credentials
+Use **either** environment variables:
+```bash
+export DB_HOST=localhost
+export DB_NAME=food_sharing_platform
+export DB_USER=root
+export DB_PASS=your_mysql_password
+```
+**or** a local config file (ignored by Git):
+```bash
+cp config.local.example.php config.local.php
+# then edit config.local.php with your own values
+```
 
-### 3. Run the Application
-Start PHP's built-in web server from the project root:
+### 4. Run the app
 ```bash
 php -S localhost:8000
 ```
-Open your browser and navigate to: **[http://localhost:8000](http://localhost:8000)**
+Open **http://localhost:8000** in your browser. On Windows you can also run `start_app.bat`.
 
 ---
 
-## 🔑 Demo Credentials
+## 🔑 Demo Accounts (local seed data only)
 
 | Role | Email | Password |
 | :--- | :--- | :--- |
-| **Donor (Restaurant)** | `restaurant@abc.com` | `password123` |
-| **Receiver (NGO)** | `ngo@foodbank.com` | `password123` |
+| Donor (Restaurant) | `restaurant@abc.com` | `password123` |
+| Receiver (NGO) | `ngo@foodbank.com` | `password123` |
+
+These accounts exist only in the seed data for local testing. Change or delete them before any real deployment.
+
+---
+
+## 🗄️ Database Schema
+
+- `users` – id, name, email (unique), hashed password, phone, address, `user_type` (donor / receiver)
+- `food_listings` – donor, food type, quantity, description, expiry time, pickup location, `status` (available / claimed / picked_up)
+- `food_claims` – links a listing to the receiver who claimed it, with a timestamp
+
+Foreign keys with `ON DELETE CASCADE` keep the data consistent.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-Web_Project/
-├── config.php          # Database PDO connection & session helpers
-├── index.php           # Landing page with platform impact stats
-├── login.php           # User login page
-├── register.php        # User registration (Donor / Receiver)
-├── dashboard.php       # Role-based dashboard for donors and receivers
-├── post_food.php       # Form for donors to list surplus food
-├── browse_food.php     # Public & receiver list of available food items
-├── claim_food.php      # Claim processing backend endpoint
-├── logout.php         # Session termination
-├── database.sql        # MySQL database schema & sample seed data
-├── .gitignore          # Git exclusion rules
-└── README.md           # Project documentation
+ShareFood/
+├── config.php                 # PDO connection, session setup, auth and CSRF helpers
+├── config.local.example.php   # Template for local DB credentials (copy to config.local.php)
+├── index.php                  # Landing page with platform impact stats
+├── register.php               # Registration (Donor / Receiver)
+├── login.php                  # Login
+├── logout.php                 # Ends the session
+├── dashboard.php              # Role-based dashboard
+├── post_food.php              # Donors list surplus food
+├── browse_food.php            # Available food listings
+├── claim_food.php             # Atomic claim endpoint
+├── database.sql               # Schema and seed data
+├── start_app.bat              # One-click start script (Windows)
+└── README.md
 ```
 
 ---
 
-## 📤 How to Push to Your GitHub Profile
+## 🔮 Possible Improvements
 
-1. Open your terminal in the project directory.
-2. Initialize Git (if not already initialized):
-   ```bash
-   git init
-   ```
-3. Add and commit all project files:
-   ```bash
-   git add .
-   git commit -m "Initial commit: ShareFood Web Application"
-   ```
-4. Create a new public repository on [GitHub](https://github.com/new) (e.g. named `ShareFood`).
-5. Link your local repository to GitHub and push:
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/ShareFood.git
-   git branch -M main
-   git push -u origin main
-   ```
+- Let donors mark claimed food as **picked up**
+- Add search and location-based filtering
+- Email or SMS notifications for new listings
+- Automated tests and a Docker setup
+
+## 👤 Author
+
+**Ashutosh Dash** – [GitHub](https://github.com/ByteBrigadier) · [LinkedIn](https://www.linkedin.com/in/ashutosh-dash-691918297)
