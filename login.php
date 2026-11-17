@@ -1,14 +1,16 @@
 <?php
-session_start();
 include 'config.php';
 
 $error_message = '';
 $success_message = '';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (!csrfValid()) {
+        $error_message = "Invalid request. Please refresh the page and try again.";
+    } else {
 
-    $email = trim($_POST['email']);
-    $password = $_POST['password'];
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
     
     if (empty($email) || empty($password)) {
         $error_message = "Please fill in all fields.";
@@ -18,21 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt->execute([$email]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Check password (hashed in DB) or demo password
-            if ($user && (password_verify($password, $user['password']) || $password === 'password123')) {
-                
+            if ($user && password_verify($password, $user['password'])) {
+
+                session_regenerate_id(true);
+
                 // Set session variables
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['name'];
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['role'] = $user['user_type']; // 'donor' or 'receiver'
 
-                // Redirect based on role
-                if ($_SESSION['role'] === 'donor') {
-                    redirect('dashboard.php');
-                } else {
-                    redirect('dashboard.php');
-                }
+                redirect('dashboard.php');
 
             } else {
                 $error_message = "Invalid email or password.";
@@ -41,6 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } catch(PDOException $e) {
             $error_message = "Login error. Please try again.";
         }
+    }
     }
 }
 ?>
@@ -196,6 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <?php endif; ?>
     
     <form method="POST" action="">
+        <?php echo csrfField(); ?>
         <div class="form-group">
             <label for="email">Email Address:</label>
             <input 
