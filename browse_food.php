@@ -1,5 +1,4 @@
 <?php
-session_start();
 include 'config.php';
 
 // Redirect if not logged in or role not set
@@ -213,7 +212,8 @@ button.claim-btn:hover {
                         <td>
                             <?php if ($_SESSION['role'] === 'receiver'): ?>
                                 <form action="claim_food.php" method="post" style="margin:0;">
-                                    <input type="hidden" name="listing_id" value="<?php echo $food['id']; ?>">
+                                    <?php echo csrfField(); ?>
+                                    <input type="hidden" name="listing_id" value="<?php echo (int) $food['id']; ?>">
                                     <button type="submit" class="claim-btn">Claim</button>
                                 </form>
                             <?php else: ?>
