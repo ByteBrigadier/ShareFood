@@ -1,9 +1,10 @@
 # MySQL local data directory
 /mysql_data/
 
-# Environment files
+# Environment / local configuration (never commit credentials)
 .env
 *.env
+config.local.php
 
 # IDE / Editor configuration
 .vscode/
